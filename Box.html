@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subwoofer Enclosure Planner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background: #ff4081;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background: #d81b60;
+        }
+        .result {
+            text-align: left;
+            font-weight: bold;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Subwoofer Enclosure Planner</h2>
+
+        <div id="sketch-container"></div>
+
+        <label for="boxWidth">Box Width (inches):</label>
+        <input type="number" id="boxWidth" placeholder="Enter width" min="5">
+
+        <label for="boxHeight">Box Height (inches):</label>
+        <input type="number" id="boxHeight" placeholder="Enter height" min="5">
+
+        <label for="boxDepth">Box Depth (inches):</label>
+        <input type="number" id="boxDepth" placeholder="Enter depth" min="5">
+
+        <label for="woodThickness">Wood Thickness (inches):</label>
+        <input type="number" id="woodThickness" placeholder="Enter thickness (e.g., 0.75)" min="0.5" step="0.01">
+
+        <label for="numSubwoofers">Number of Subwoofer Cutouts:</label>
+        <input type="number" id="numSubwoofers" placeholder="Enter number of cutouts" min="1" max="4">
+
+        <label for="subwooferDiameter">Subwoofer Cutout Diameter (inches):</label>
+        <input type="number" id="subwooferDiameter" placeholder="Enter sub diameter" min="5">
+
+        <label for="boxType">Enclosure Type:</label>
+        <select id="boxType" onchange="togglePortSection()">
+            <option value="sealed">Sealed</option>
+            <option value="ported">Ported</option>
+        </select>
+
+        <div id="portSection" style="display: none;">
+            <label for="portDiameter">Port Diameter (inches):</label>
+            <input type="number" id="portDiameter" placeholder="Enter port diameter" min="1">
+
+            <label for="portLength">Port Length (inches):</label>
+            <input type="number" id="portLength" placeholder="Enter port length" min="1">
+        </div>
+
+        <button onclick="calculateEnclosure()">Calculate & Generate Plans</button>
+
+        <div class="result" id="output"></div>
+    </div>
+
+    <script>
+        function togglePortSection() {
+            let boxType = document.getElementById("boxType").value;
+            document.getElementById("portSection").style.display = boxType === "ported" ? "block" : "none";
+        }
+
+        let boxDimensions = { width: 12, height: 12, depth: 12, wood: 0.75, numSubwoofers: 1, subwooferDiameter: 8 };
+
+        function calculateEnclosure() {
+            let width = parseFloat(document.getElementById("boxWidth").value);
+            let height = parseFloat(document.getElementById("boxHeight").value);
+            let depth = parseFloat(document.getElementById("boxDepth").value);
+            let thickness = parseFloat(document.getElementById("woodThickness").value);
+            let numSubwoofers = parseInt(document.getElementById("numSubwoofers").value);
+            let subwooferDiameter = parseFloat(document.getElementById("subwooferDiameter").value);
+            let boxType = document.getElementById("boxType").value;
+            let output = document.getElementById("output");
+
+            if (isNaN(width) || isNaN(height) || isNaN(depth) || isNaN(thickness) || isNaN(numSubwoofers) || isNaN(subwooferDiameter) || width <= 0 || height <= 0 || depth <= 0 || thickness <= 0) {
+                output.innerHTML = "Please enter valid dimensions.";
+                return;
+            }
+
+            let netWidth = width - 2 * thickness;
+            let netHeight = height - 2 * thickness;
+            let netDepth = depth - 2 * thickness;
+            let internalVolume = (netWidth * netHeight * netDepth) / 1728;
+            let internalVolumeLiters = (internalVolume * 28.3168).toFixed(2);
+
+            let resultText = `<strong>Cut List:</strong><br>
+                Front & Back Panels: ${width} x ${height} inches<br>
+                Side Panels: ${depth} x ${height} inches<br>
+                Top & Bottom Panels: ${width} x ${depth} inches<br>
+                <strong>Internal Volume:</strong> ${internalVolume.toFixed(2)} ft³ (${internalVolumeLiters} L)<br>
+                <strong>Subwoofer Cutouts:</strong> ${numSubwoofers} × ${subwooferDiameter}" Diameter`;
+
+            output.innerHTML = resultText;
+
+            boxDimensions = { width, height, depth, wood: thickness, numSubwoofers, subwooferDiameter };
+            redraw();
+        }
+
+        function setup() {
+            let canvas = createCanvas(400, 200);
+            canvas.parent("sketch-container");
+            noLoop();
+        }
+
+        function draw() {
+            clear();
+            background(220);
+            fill(200);
+            rect(50, 50, boxDimensions.width * 2, boxDimensions.height * 2);
+            fill(0);
+            let spacing = boxDimensions.width / (boxDimensions.numSubwoofers + 1);
+            for (let i = 1; i <= boxDimensions.numSubwoofers; i++) {
+                ellipse(50 + spacing * i * 2, 100, boxDimensions.subwooferDiameter * 2);
+            }
+        }
+    </script>
+
+</body>
+</html>
